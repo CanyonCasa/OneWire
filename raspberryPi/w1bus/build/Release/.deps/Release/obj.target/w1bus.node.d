@@ -1,0 +1,1 @@
+cmd_Release/obj.target/w1bus.node := g++ -o Release/obj.target/w1bus.node -shared -pthread -rdynamic  -Wl,-soname=w1bus.node -Wl,--start-group Release/obj.target/w1bus/w1bus.o Release/obj.target/w1bus/w1io.o -Wl,--end-group /usr/local/lib/libgpiodcxx.so

@@ -1,0 +1,212 @@
+[
+    {
+        "id": "5c3721f7.5b4b6",
+        "type": "subflow",
+        "name": "OneWire Temperature",
+        "info": "# OneWire Temp (Filtered)\n\nSynopsis: Reads a OneWire temperature, filters bad readings, and formats output.\n\nOneWire serial number (sn) required.\n\nSet Farenheit to false for Celcius readings true (default) for Farenheit readings.\n\nOutput message format (msg.format) set to 'Celcius' or 'Farenheit' and units (msg.units) set to 'C' or 'F' appropriately.\n\nFix parameter used to set output resolution, 3 digits default.\n\nNode status reflects current reading in the selected format.\n",
+        "category": "",
+        "in": [
+            {
+                "x": 40,
+                "y": 140,
+                "wires": [
+                    {
+                        "id": "66003c06.c837f4"
+                    }
+                ]
+            }
+        ],
+        "out": [
+            {
+                "x": 950,
+                "y": 140,
+                "wires": [
+                    {
+                        "id": "8e5c0e63.eac84",
+                        "port": 0
+                    }
+                ]
+            }
+        ],
+        "env": [
+            {
+                "name": "sn",
+                "type": "str",
+                "value": ""
+            },
+            {
+                "name": "fixed",
+                "type": "num",
+                "value": "3",
+                "ui": {
+                    "label": {
+                        "en-US": "Fixed Format"
+                    },
+                    "type": "input",
+                    "opts": {
+                        "types": [
+                            "num"
+                        ]
+                    }
+                }
+            },
+            {
+                "name": "interpolate",
+                "type": "bool",
+                "value": "true",
+                "ui": {
+                    "label": {
+                        "en-US": "Interpolate Bad Readings"
+                    },
+                    "type": "input",
+                    "opts": {
+                        "types": [
+                            "bool"
+                        ]
+                    }
+                }
+            },
+            {
+                "name": "log",
+                "type": "bool",
+                "value": "true",
+                "ui": {
+                    "label": {
+                        "en-US": "Log Errors"
+                    },
+                    "type": "input",
+                    "opts": {
+                        "types": [
+                            "bool"
+                        ]
+                    }
+                }
+            },
+            {
+                "name": "Farenheit",
+                "type": "bool",
+                "value": "true"
+            },
+            {
+                "name": "Label",
+                "type": "str",
+                "value": ""
+            }
+        ],
+        "meta": {},
+        "color": "#c78100",
+        "status": {
+            "x": 950,
+            "y": 200,
+            "wires": [
+                {
+                    "id": "683076b6.17a658",
+                    "port": 0
+                }
+            ]
+        }
+    },
+    {
+        "id": "8e5c0e63.eac84",
+        "type": "function",
+        "z": "5c3721f7.5b4b6",
+        "name": "Fix OneWire Temperature",
+        "func": "// filter bad readings, optionally interpolate missing vaules, and format output ...\n\nlet form = msg.format=='Celcius' ? 'C' : 'F';\n\nif ((form=='C' && msg.payload==85) || (form=='F' && msg.payload==185)) {\n    let report = env.get(\"report\");\n    if (report) {\n        let errors = (context.get(\"errors\")||0) + 1;\n        context.set(\"errors\",errors);\n        node.log(\"Fix OneWire Temperature Error[\"+msg.topic + \",\"+errors+\"] @ \"+new Date());\n        node.status({ fill: \"red\", shape: \"ring\", text: \"Error: \"+errors })\n    }\n    let interpolate = env.get(\"iterpolate\");\n    let last = context.get(\"last\");\n    if (interpolate && (last!==undefined)) return { topic: msg.topic, payload: last };\n    return null;\n}\n\nlet fixed = env.get(\"fixed\");\n\nmsg.payload = msg.payload.toFixed(fixed);\ncontext.set(\"last\",msg.payload);\nnode.status({ fill: \"blue\", shape: \"ring\", text: msg.payload+form });\nreturn msg;",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 770,
+        "y": 140,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "683076b6.17a658",
+        "type": "status",
+        "z": "5c3721f7.5b4b6",
+        "name": "",
+        "scope": [
+            "8e5c0e63.eac84"
+        ],
+        "x": 810,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "45f6e70d.ef7ac8",
+        "type": "1-Wire",
+        "z": "5c3721f7.5b4b6",
+        "identifier": "",
+        "name": "OneWire Temperature",
+        "format": "0",
+        "x": 480,
+        "y": 140,
+        "wires": [
+            [
+                "8e5c0e63.eac84",
+                "baaae829.2d0228"
+            ]
+        ]
+    },
+    {
+        "id": "66003c06.c837f4",
+        "type": "function",
+        "z": "5c3721f7.5b4b6",
+        "name": "Assign Sensor SN",
+        "func": "// assigns sn from instance to message topic...\n\nlet sn = env.get(\"sn\");\nlet label = env.get(\"Label\") || '';\nlet family = sn.substring(0,2).toLowerCase();\nif (['10','22','28','3b','42'].includes(family)) {\n    msg.topic = sn;\n    msg.label = label;\n    msg.farenheit = env.get(\"Farenheit\");\n    msg.logErrors = env.get('log') || true;\n    return msg;    \n} else {\n    node.error(\"Invalid OneWire Temperature Sensor Serial Number\");\n}\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 210,
+        "y": 140,
+        "wires": [
+            [
+                "45f6e70d.ef7ac8",
+                "4a29d1d1.5b7d1"
+            ]
+        ]
+    },
+    {
+        "id": "baaae829.2d0228",
+        "type": "debug",
+        "z": "5c3721f7.5b4b6",
+        "d": true,
+        "name": "Reading",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 720,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "4a29d1d1.5b7d1",
+        "type": "debug",
+        "z": "5c3721f7.5b4b6",
+        "d": true,
+        "name": "Sensor",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 440,
+        "y": 80,
+        "wires": []
+    }
+]

@@ -1,0 +1,151 @@
+[
+    {
+        "id": "e3966515.2dbf88",
+        "type": "subflow",
+        "name": "OneWire Port",
+        "info": "# OneWire Port\n\nSynopsis: Reads/Writes a OneWire port.\n\nOneWire serial number (sn) required.\n\n\"Read AFter Write Delay\" sets the delay in millisenconds before reading a status update after a port write\n\nNode status reflects current port value in hex format, as well as an OFF/ON indication if applicable.\n",
+        "category": "",
+        "in": [
+            {
+                "x": 80,
+                "y": 140,
+                "wires": [
+                    {
+                        "id": "40e2d098.c3ba8"
+                    }
+                ]
+            }
+        ],
+        "out": [
+            {
+                "x": 920,
+                "y": 140,
+                "wires": [
+                    {
+                        "id": "d8678def.73662",
+                        "port": 0
+                    }
+                ]
+            }
+        ],
+        "env": [
+            {
+                "name": "sn",
+                "type": "str",
+                "value": ""
+            },
+            {
+                "name": "Read After Write Delay",
+                "type": "num",
+                "value": "1000"
+            },
+            {
+                "name": "Label",
+                "type": "str",
+                "value": ""
+            },
+            {
+                "name": "log",
+                "type": "bool",
+                "value": "true"
+            }
+        ],
+        "meta": {},
+        "color": "#c7ac00",
+        "status": {
+            "x": 920,
+            "y": 200,
+            "wires": [
+                {
+                    "id": "d4871598.d3a428",
+                    "port": 0
+                }
+            ]
+        }
+    },
+    {
+        "id": "d4871598.d3a428",
+        "type": "status",
+        "z": "e3966515.2dbf88",
+        "name": "",
+        "scope": [
+            "d8678def.73662"
+        ],
+        "x": 780,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "d8678def.73662",
+        "type": "1-Wire",
+        "z": "e3966515.2dbf88",
+        "identifier": "",
+        "name": "Port I/O",
+        "format": "0",
+        "x": 460,
+        "y": 140,
+        "wires": [
+            [
+                "84566a3a.229fc8"
+            ]
+        ]
+    },
+    {
+        "id": "40e2d098.c3ba8",
+        "type": "function",
+        "z": "e3966515.2dbf88",
+        "name": "Assign Sensor SN",
+        "func": "// assigns sn from instance to message topic...\n\nlet sn = env.get(\"sn\");\nlet family = sn.substring(0,2).toLowerCase();\nlet label = env.get(\"Label\") || '';\n\nif (['3a','29'].includes(family)) {\n    msg.src = msg.topic;\n    msg.topic = sn;\n    msg.label = label;\n    msg.logErrors = env.get('log') || true;\n    msg.mask = msg.mask!==undefined ? msg.mask : family=='29' ? 0x0F : 0x01;\n    return msg;\n} else {\n    node.error(\"Invalid OneWire Port Serial Number\");\n}\n",
+        "outputs": 1,
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 230,
+        "y": 140,
+        "wires": [
+            [
+                "8bc4d69f.5457a8",
+                "d8678def.73662"
+            ]
+        ]
+    },
+    {
+        "id": "84566a3a.229fc8",
+        "type": "debug",
+        "z": "e3966515.2dbf88",
+        "d": true,
+        "name": "Port Response",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 760,
+        "y": 260,
+        "wires": []
+    },
+    {
+        "id": "8bc4d69f.5457a8",
+        "type": "debug",
+        "z": "e3966515.2dbf88",
+        "d": true,
+        "name": "Port Data",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "true",
+        "targetType": "full",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 460,
+        "y": 80,
+        "wires": []
+    }
+]
